@@ -3,15 +3,14 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\alumnos;
+use App\Models\alumnos; // Asegúrate de que el nombre del modelo coincide con el archivo y uso
+use Illuminate\Support\Arr;
 
 class AlumnoController extends Controller
 {
-
     function __construct()
     {
-
-        $this->middleware('permission:ver-estudiante | crear-estudiante | editar-estudiante | borrar-estudiante')->only('index');
+        $this->middleware('permission:ver-estudiante|crear-estudiante|editar-estudiante|borrar-estudiante')->only('index');
         $this->middleware('permission:crear-estudiante', ['only' => ['create', 'store']]);
         $this->middleware('permission:editar-estudiante', ['only' => ['edit', 'update']]);
         $this->middleware('permission:borrar-estudiante', ['only' => ['destroy']]);
@@ -22,13 +21,12 @@ class AlumnoController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-
-
-
     public function index()
     {
-        $blogs = alumnos::paginate(5);
-        return view('alumnos.index', compact('estudiantes'));
+        //Con paginación
+        $alumnos = alumnos::paginate(5);
+        return view('Alumnos.index', compact('alumnos'));
+        // Recuerda poner en el index.blade.php de alumnos el código para paginación {!! $alumnos->links() !!}    
     }
 
     /**
@@ -38,7 +36,7 @@ class AlumnoController extends Controller
      */
     public function create()
     {
-        return view('alumnos.crear');
+        return view('Alumnos.crear');
     }
 
     /**
@@ -50,16 +48,16 @@ class AlumnoController extends Controller
     public function store(Request $request)
     {
         request()->validate([
-            'numeroDeControl' => 'required',
-            'nombre' => 'required',
-            'apellidoPaterno' => 'required',
-            'apellidoMaterno' => 'required',
-            'semestre' => 'required',
+            'numeroDeControl' => 'required|numeric',
+            'nombre' => 'required|string|max:50',
+            'apellidoPaterno' => 'required|string|max:50',
+            'apellidoMaterno' => 'required|string|max:50',
+            'semestre' => 'required|integer|between:1,14',
         ]);
-    
+
         alumnos::create($request->all());
-    
-        return redirect()->route('alumnos.index');
+
+        return redirect()->route('Alumnos.index')->with('success', 'Alumno creado con éxito');
     }
 
     /**
@@ -70,52 +68,50 @@ class AlumnoController extends Controller
      */
     public function show($id)
     {
-        //
+        // Esta función podría ser usada para mostrar detalles específicos del alumno si se requiere
     }
 
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  int  $id
+     * @param  alumnos $alumno
      * @return \Illuminate\Http\Response
      */
-    public function edit(alumnos $alumnos )
+    public function edit(alumnos $alumno)
     {
-        return view('alumnos.editar',compact('alumnos'));
+        return view('Alumnos.editar', compact('alumno'));
     }
 
     /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
+     * @param  alumnos $alumno
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, alumnos $alumnos)
+    public function update(Request $request, $alumno)
     {
-        request()->validate([
-            'numeroDeControl' => 'required',
-            'nombre' => 'required',
-            'apellidoPaterno' => 'required',
-            'apellidoMaterno' => 'required',
-            'semestre' => 'required',
-        ]);
-    
-        $alumnos->update($request->all());
-    
-        return redirect()->route('alumnos.index');
+        // Validar el ID del alumno
+        $alumno = Alumnos::where('numeroDeControl', $alumno)->firstOrFail();
+
+      
+
+        // Redirect back to the list with a success message
+        return redirect()->route('Alumnos.index')->with('success', 'Alumno actualizado con éxito');
     }
+
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param  alumnos $alumno
      * @return \Illuminate\Http\Response
      */
-    public function destroy( alumnos $alumnos)
+    public function destroy($numeroDeControl)
     {
-        $alumnos->delete();
-    
-        return redirect()->route('alumnos.index');
+        $alumno = alumnos::findOrFail($numeroDeControl);
+        $alumno->delete();
+
+        return redirect()->route('Alumnos.index')->with('success', 'Alumno eliminado con éxito');
     }
 }
